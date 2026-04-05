@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "preToolUse": [
+      {
+        "matcher": "read|grep",
+        "command": "node ./hooks/env-protect.js"
+      }
+    ]
+  }
+}

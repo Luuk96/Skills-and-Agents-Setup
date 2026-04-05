@@ -9,77 +9,110 @@ in a structured way — no guessing, no random changes.
 - When Luuk gets an error message
 - When the app crashes or behaves unexpectedly
 - When Luuk says "something is broken" or "this isn't working"
+- Also available as the /debug command
 
 ---
 
 ## Step 1 — Gather information
 
-Before calling any agent, collect:
-1. **The error message** — exact text, copied in full. Never paraphrase.
-2. **What Luuk was doing** — which screen, which action, what button was pressed
-3. **What was expected** — what should have happened?
-4. **What changed recently** — did anything get added or changed before the break?
-   (Run `git log --oneline -5` to check)
+Before calling any agent, collect all of this:
+1. **The exact error message** — full text, copied exactly. Never paraphrase.
+2. **What Luuk was doing** — which screen, which action, what was pressed or typed
+3. **What the expected behavior is** — what should have happened instead?
+4. **What changed recently** — run `git log --oneline -5` and `git diff HEAD~3`
 
-If Luuk doesn't have all of this, ask for it before continuing.
+Do not proceed to Step 2 without the exact error message.
+If Luuk doesn't have it, ask: "Can you copy the full error message exactly as it appears?"
 
 ---
 
 ## Step 2 — Call the Analyst
 
-Hand off to the Analyst with:
-- The error message
-- The files most likely involved (based on the error or what Luuk described)
-- The question: "What is causing this error and where exactly is it happening?"
+Hand off to the Analyst using the standard handoff block:
+```
+## Handoff → Analyst
+- Goal: Identify the root cause of this error
+- Current state: Error collected. Recent git changes reviewed.
+- Your task: Read the relevant files and explain exactly what is causing this error and where.
+- Files to read: [files identified from the error message or recent changes]
+- Expected output: Analysis Report with root cause, file, line number, and confidence level
+- Constraints: Do not fix anything — only read and report
+```
 
-The Analyst reads the relevant code and produces a findings report.
+Receive the Analysis Report.
 
 ---
 
-## Step 3 — Confirm the diagnosis with Luuk
+## Step 3 — Confirm the diagnosis
 
 Present the Analyst's findings to Luuk in plain English:
-> "Here's what I found: [explanation]. The problem is in [file], [plain English description of what's wrong]."
+> "Here's what I found: [explanation in simple terms]. The problem is in [file] at [line]: [what the code is doing wrong]."
 
-Ask: "Does this match what you expected? Shall I fix it?"
-
-In autonomous mode: skip this confirmation and proceed directly to Step 4.
+In interactive mode: ask "Does this match what you expected? Shall I apply the fix?"
+In autonomous mode: proceed directly to Step 4, noting the diagnosis in the output.
 
 ---
 
 ## Step 4 — Call the Debugger
 
-Hand off to the Debugger with:
-- The Analyst's report
-- The exact file and location of the problem
-- The expected behavior
-
-The Debugger applies the fix.
-
----
-
-## Step 5 — Verify the fix
-
-After the Debugger applies the fix:
-1. Tell Luuk exactly how to test that the fix worked
-   (e.g. "Run the app and try [specific action] — you should now see [expected result]")
-2. Ask Luuk to confirm the fix worked before committing
-
----
-
-## Step 6 — Commit the fix
-
-Once confirmed:
+Hand off to the Debugger using the standard handoff block:
 ```
-git add [specific files changed]
-git commit -m "Fix: [plain English description of what was broken and what was fixed]"
+## Handoff → Debugger
+- Goal: Fix the root cause of this error
+- Current state: Analyst report complete. Root cause identified at [file], [line].
+- Your task: Apply the minimal fix that resolves this root cause
+- Files to read: [the specific file(s) from the Analyst report]
+- Expected output: Debug Report with fix applied and verification steps
+- Constraints: Fix only the root cause — do not refactor, improve, or change anything else
 ```
 
-Example commit message: "Fix: login button crash when email field is empty"
+Receive the Debug Report with fix applied.
 
 ---
 
-## Step 7 — Update PROGRESS.md
+## Step 5 — Self-verification checkpoint
 
-Add the bug and fix to the "Known issues / deferred" section of PROGRESS.md,
-marked as resolved with today's date.
+Before asking Luuk to test anything, Claude checks its own work:
+1. Re-read the changed file(s) after the fix
+2. Trace through the logic: "Given the error scenario, does this fix prevent the error?"
+3. Check: "Could this fix break anything else?" (use Grep to check where changed code is used)
+4. If the fix looks correct: proceed to Step 6
+5. If something looks off: go back to the Debugger with findings before asking Luuk to test
+
+---
+
+## Step 6 — Ask Luuk to verify
+
+Tell Luuk exactly how to test the fix:
+> "To verify the fix: [exact steps]. You should see [expected result]. The error should no longer appear."
+
+In interactive mode: wait for Luuk to confirm before committing.
+In autonomous mode: document the verification steps clearly and commit.
+
+---
+
+## Step 7 — Call the Reviewer (quick pass)
+
+Ask the Reviewer to check only the changed lines:
+```
+## Handoff → Reviewer
+- Goal: Quick check that the fix is clean and has no side effects
+- Current state: Fix applied and verified.
+- Your task: Review only the changed lines for correctness and unintended side effects
+- Files to read: [the file that was changed]
+- Expected output: Approved to commit / flag if new problem introduced
+- Constraints: Do not review the entire file — only the changed lines
+```
+
+---
+
+## Step 8 — Commit the fix
+
+Once confirmed and reviewed:
+- Stage only the changed files
+- Commit message format: `Fix: [plain English description of what was broken and what was fixed]`
+  - Good: `Fix: login screen crash when email field is empty`
+  - Bad: `fix bug`
+
+- Update PROGRESS.md: mark the bug as resolved with today's date
+- Update COORDINATION.md: clear the bug from "Currently in progress" if it was there
