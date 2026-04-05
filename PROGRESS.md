@@ -45,7 +45,13 @@ Phase 1-3 complete (toolkit). Phase 4 complete (live observability dashboard). F
 
 ## Session log
 
-### 2026-04-06
+### 2026-04-06 (session 3)
+- Reorganised project: removed redundant workflows/ folder (replaced by .claude/commands/)
+- Removed 7 empty placeholder folders inside the dashboard scaffold
+- Updated CLAUDE.md to accurately reflect the current folder structure
+- Pushed all changes to GitHub: Luuk96/Skills-and-Agents-Setup
+
+### 2026-04-06 (session 2)
 - Built the complete live observability dashboard for the Claude Code agent ecosystem
 - 4-package monorepo: @dashboard/core (shared types), @dashboard/sdk (agent instrumentation), backend (Express + WebSocket + SQLite), frontend (React + Vite + Tailwind + React Flow)
 - Designed event-driven architecture: 25+ event types, StateProjector replays events into live state

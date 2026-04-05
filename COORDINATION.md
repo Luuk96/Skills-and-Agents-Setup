@@ -6,7 +6,7 @@ Short-term working memory. Read this at the start of every session.
 
 ## Currently in progress
 
-Nothing. Session 2 is complete.
+Nothing. Session 3 is complete.
 
 ---
 
@@ -41,6 +41,8 @@ Run the dashboard to verify it works end-to-end:
 2. Terminal 2: cd dashboard && npm run dev -w packages/frontend
 3. Terminal 3: cd dashboard && npm run mock -w packages/backend
 Then open http://localhost:5173 to see the live dashboard.
+
+After that: wire the dashboard into a real project using @dashboard/sdk.
 
 ---
 
