@@ -6,10 +6,10 @@
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { config } from './config.js';
-import eventsRouter from './api/routes/events.js';
-import stateRouter from './api/routes/state.js';
-import { createWebSocketServer } from './broadcast/WebSocketServer.js';
+import { config } from './config';
+import eventsRouter from './api/routes/events';
+import stateRouter from './api/routes/state';
+import { createWebSocketServer } from './broadcast/WebSocketServer';
 
 export function createApp() {
   const app = express();

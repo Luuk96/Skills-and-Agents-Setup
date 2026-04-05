@@ -5,7 +5,7 @@
 // ============================================================
 
 import type { DashboardEvent, EventType, EventPayload } from '@dashboard/core';
-import { generateId } from './generateId.js';
+import { generateId } from './generateId';
 
 interface BuildEventOptions {
   type: EventType;

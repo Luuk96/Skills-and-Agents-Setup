@@ -6,8 +6,8 @@
 
 import { Router, Request, Response } from 'express';
 import type { DashboardEvent } from '@dashboard/core';
-import { getRecentEvents, getEventsBySession } from '../../persistence/EventRepository.js';
-import { ingestEvent } from '../../ingestion/IngestionPipeline.js';
+import { getRecentEvents, getEventsBySession } from '../../persistence/EventRepository';
+import { ingestEvent } from '../../ingestion/IngestionPipeline';
 
 const router = Router();
 

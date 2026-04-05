@@ -7,8 +7,8 @@
 // ============================================================
 
 import { Router, Request, Response } from 'express';
-import { projector } from '../../ingestion/IngestionPipeline.js';
-import { toSnapshot } from '../../projection/LiveState.js';
+import { projector } from '../../ingestion/IngestionPipeline';
+import { toSnapshot } from '../../projection/LiveState';
 
 const router = Router();
 

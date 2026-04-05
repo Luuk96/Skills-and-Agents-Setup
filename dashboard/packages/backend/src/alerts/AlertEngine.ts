@@ -5,7 +5,7 @@
 // ============================================================
 
 import type { Alert, AlertRule, ProjectState } from '@dashboard/core';
-import { broadcastAlert } from '../broadcast/WebSocketServer.js';
+import { broadcastAlert } from '../broadcast/WebSocketServer';
 
 // Track when each rule last fired (for cooldown enforcement)
 const lastFiredAt: Map<string, number> = new Map();

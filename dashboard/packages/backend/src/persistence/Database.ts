@@ -7,7 +7,7 @@
 import Database from 'better-sqlite3';
 import { readFileSync, mkdirSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
-import { config } from '../config.js';
+import { config } from '../config';
 
 let db: Database.Database | null = null;
 

@@ -4,8 +4,8 @@
 // Events are the single source of truth — state is derived from them.
 // ============================================================
 
-import type { AgentCapability, AgentStatus } from './agent.js';
-import type { TaskDependency, TaskPriority } from './task.js';
+import type { AgentCapability, AgentStatus } from './agent';
+import type { TaskDependency, TaskPriority } from './task';
 
 /** All possible event type strings — exhaustive, never use raw strings */
 export type EventType =

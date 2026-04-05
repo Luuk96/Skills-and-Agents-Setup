@@ -4,13 +4,13 @@
 // ProjectStateSnapshot is the JSON-serialisable form sent to the frontend.
 // ============================================================
 
-import type { Agent } from './agent.js';
-import type { Workflow } from './workflow.js';
-import type { Task } from './task.js';
-import type { Skill, SkillInvocation } from './skill.js';
-import type { Handoff } from './handoff.js';
-import type { Alert } from './alert.js';
-import type { DashboardEvent } from './event.js';
+import type { Agent } from './agent';
+import type { Workflow } from './workflow';
+import type { Task } from './task';
+import type { Skill, SkillInvocation } from './skill';
+import type { Handoff } from './handoff';
+import type { Alert } from './alert';
+import type { DashboardEvent } from './event';
 
 /** System health roll-up */
 export type SystemHealth = 'healthy' | 'degraded' | 'critical';

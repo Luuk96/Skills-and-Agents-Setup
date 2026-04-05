@@ -9,8 +9,8 @@ import chokidar, { FSWatcher } from 'chokidar';
 import { createReadStream, existsSync, mkdirSync } from 'fs';
 import { createInterface } from 'readline';
 import type { DashboardEvent } from '@dashboard/core';
-import { ingestBatch } from './IngestionPipeline.js';
-import { config } from '../config.js';
+import { ingestBatch } from './IngestionPipeline';
+import { config } from '../config';
 
 // Track which files we've already fully read to avoid reprocessing
 const processedFiles = new Set<string>();

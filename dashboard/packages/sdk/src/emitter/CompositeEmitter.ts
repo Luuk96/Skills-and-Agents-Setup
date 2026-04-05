@@ -5,8 +5,8 @@
 // ============================================================
 
 import type { DashboardEvent } from '@dashboard/core';
-import { HttpEmitter } from './HttpEmitter.js';
-import { FileEmitter } from './FileEmitter.js';
+import { HttpEmitter } from './HttpEmitter';
+import { FileEmitter } from './FileEmitter';
 
 export class CompositeEmitter {
   private readonly http: HttpEmitter;

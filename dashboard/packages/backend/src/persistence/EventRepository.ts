@@ -4,7 +4,7 @@
 // ============================================================
 
 import type { DashboardEvent } from '@dashboard/core';
-import { getDatabase } from './Database.js';
+import { getDatabase } from './Database';
 
 export interface StoredEvent {
   seq: number;

@@ -37,8 +37,8 @@ import type {
   SkillCompletedPayload,
   SessionStartedPayload,
 } from '@dashboard/core';
-import { createEmptyState, recomputeStats, computeSystemHealth } from './LiveState.js';
-import { config } from '../config.js';
+import { createEmptyState, recomputeStats, computeSystemHealth } from './LiveState';
+import { config } from '../config';
 
 export class StateProjector {
   private state: ProjectState;

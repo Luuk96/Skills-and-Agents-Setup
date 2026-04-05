@@ -3,9 +3,9 @@
 // Boots the database, file watcher, and HTTP+WebSocket server.
 // ============================================================
 
-import { getDatabase } from './persistence/Database.js';
-import { startFileWatcher } from './ingestion/FileWatcher.js';
-import { startServer } from './server.js';
+import { getDatabase } from './persistence/Database';
+import { startFileWatcher } from './ingestion/FileWatcher';
+import { startServer } from './server';
 
 async function main() {
   console.log('[Dashboard Backend] Starting up...');

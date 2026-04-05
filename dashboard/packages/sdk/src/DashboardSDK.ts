@@ -15,9 +15,9 @@ import type {
   TaskPriority,
   TaskDependency,
 } from '@dashboard/core';
-import { CompositeEmitter } from './emitter/CompositeEmitter.js';
-import { buildEvent } from './helpers/buildEvent.js';
-import { generateId } from './helpers/generateId.js';
+import { CompositeEmitter } from './emitter/CompositeEmitter';
+import { buildEvent } from './helpers/buildEvent';
+import { generateId } from './helpers/generateId';
 
 /** Configuration passed when creating an SDK instance */
 export interface SDKConfig {

@@ -7,7 +7,7 @@
 import { WebSocketServer as WSSServer, WebSocket } from 'ws';
 import type { Server } from 'http';
 import type { ProjectStateSnapshot } from '@dashboard/core';
-import { config } from '../config.js';
+import { config } from '../config';
 
 // Track all currently connected clients
 const clients = new Set<WebSocket>();

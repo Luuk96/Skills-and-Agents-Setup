@@ -9,7 +9,7 @@ import type {
   ProjectStateSnapshot,
   SystemStats,
 } from '@dashboard/core';
-import { config } from '../config.js';
+import { config } from '../config';
 
 /** Creates the initial empty state */
 export function createEmptyState(): ProjectState {

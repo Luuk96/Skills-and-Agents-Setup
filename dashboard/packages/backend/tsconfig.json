@@ -4,7 +4,13 @@
     "rootDir": "src",
     "outDir": "dist",
     "module": "CommonJS",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@dashboard/core": ["../core/src/index.ts"],
+      "@dashboard/core/*": ["../core/src/*"]
+    }
   },
   "include": ["src/**/*"]
 }

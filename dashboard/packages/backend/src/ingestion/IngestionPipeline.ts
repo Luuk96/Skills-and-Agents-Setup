@@ -9,10 +9,10 @@
 // ============================================================
 
 import type { DashboardEvent } from '@dashboard/core';
-import { insertEvent } from '../persistence/EventRepository.js';
-import { StateProjector } from '../projection/StateProjector.js';
-import { toSnapshot } from '../projection/LiveState.js';
-import { broadcastState, broadcastEvent } from '../broadcast/WebSocketServer.js';
+import { insertEvent } from '../persistence/EventRepository';
+import { StateProjector } from '../projection/StateProjector';
+import { toSnapshot } from '../projection/LiveState';
+import { broadcastState, broadcastEvent } from '../broadcast/WebSocketServer';
 
 // The single shared projector instance — all events flow through here
 export const projector = new StateProjector();
