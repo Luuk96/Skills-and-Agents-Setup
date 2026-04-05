@@ -6,7 +6,7 @@ Update at the end of every work session.
 ---
 
 ## Current status
-Phase 1-3 complete. Full universal toolkit built, upgraded with research, and installed into this project.
+Phase 1-3 complete (toolkit). Phase 4 complete (live observability dashboard). Full system built, tested, and pushed to GitHub.
 
 ## What works end-to-end
 
@@ -18,6 +18,11 @@ Phase 1-3 complete. Full universal toolkit built, upgraded with research, and in
 - Anthropic courses folder with claude-code-fundamentals.md, SUMMARY.md, and MASTER.md
 - All agents upgraded with: tool lists, termination criteria, handoff blocks, loop prevention
 - Template upgraded with: ECOSYSTEM.md, COORDINATION.md, hooks/, .claude/commands/
+- Full live observability dashboard (dashboard/) with 10 views, real-time WebSocket, SQLite storage
+- @dashboard/sdk — agents use this to emit events from any project
+- Agent Network Graph — live visualization of agent interactions and handoffs
+- Mock data generator — simulates a full sprint to test the dashboard
+- ECOSYSTEM.md — full instrumentation guide for wiring future projects to the dashboard
 
 ## What is in progress
 
@@ -25,19 +30,30 @@ Phase 1-3 complete. Full universal toolkit built, upgraded with research, and in
 
 ## What is next
 
+- Verify the dashboard runs end-to-end (3 terminal commands, open localhost:5173)
+- Wire the dashboard into a real project by importing @dashboard/sdk and calling emit methods
 - Add more Anthropic courses to anthropic-courses/ and update SUMMARY.md and MASTER.md each time
-- Build industry-specific agents (mobile-dev, web-dev, trading-bot, video-tools) as Phase 2
-- Test the full toolkit by running it on a real new project
+- Build industry-specific agents (mobile-dev, web-dev, trading-bot, video-tools) as Phase 3
 
 ## Known issues / deferred
 
-- /end, /start, /sprint, /debug, /review commands require Claude Code restart to activate
 - settings.local.json is local only (not committed) — must be re-created if repo is cloned fresh
-- No COORDINATION.md or PROGRESS.md was created for this project until end of session 1 (now fixed)
+- data/ folder (SQLite DB + events/) is gitignored — local only, not pushed
+- Dashboard not yet wired to a real project — currently tested with mock data only
 
 ---
 
 ## Session log
+
+### 2026-04-06
+- Built the complete live observability dashboard for the Claude Code agent ecosystem
+- 4-package monorepo: @dashboard/core (shared types), @dashboard/sdk (agent instrumentation), backend (Express + WebSocket + SQLite), frontend (React + Vite + Tailwind + React Flow)
+- Designed event-driven architecture: 25+ event types, StateProjector replays events into live state
+- Built AlertEngine with 5 built-in rules (agent blocked, agent error, workflow failed, blocked tasks, skill failure spike)
+- Built Agent Network Graph (Phase 2): live React Flow visualization with pulsing status dots, handoff edges, click-to-inspect drawer
+- Fixed all ts-node startup errors: removed --esm flag, stripped .js import extensions, added tsconfig paths for @dashboard/core
+- Created GitHub repository: Luuk96/Skills-and-Agents-Setup and pushed all 233 objects
+- Decided: dashboard is a permanent foundation layer — every future project will wire to it via @dashboard/sdk
 
 ### 2026-04-05
 - Built the complete universal toolkit from scratch: 6 agents, 5 workflows, universal project template

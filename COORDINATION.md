@@ -6,22 +6,25 @@ Short-term working memory. Read this at the start of every session.
 
 ## Currently in progress
 
-Nothing. Session 1 is complete.
+Nothing. Session 2 is complete.
 
 ---
 
 ## Decisions made this session
 
-- Universal foundation before industry-specific agents — build what every project needs first
-- MASTER.md is the LLM-optimized reference file — update it every time a course is added
-- All agents use standardized handoff blocks for inter-agent communication
-- .claude/settings.local.json is excluded from Git (local only)
+- Built the full observability dashboard as a permanent foundation layer for all future projects
+- Event-driven architecture chosen: events are the source of truth, state is always derived
+- SQLite for local-first storage — no external dependencies
+- CompositeEmitter: HTTP-first with file fallback so events are never lost
+- Monorepo with npm workspaces: core, sdk, backend, frontend as separate packages
+- Agent Network Graph added as Phase 2 of the dashboard
+- Repository created and pushed: Luuk96/Skills-and-Agents-Setup
 
 ---
 
 ## Blocked / waiting on
 
-- /commands require Claude Code restart to become active — restart before next session
+- Nothing currently blocked.
 
 ---
 
@@ -33,8 +36,11 @@ None.
 
 ## Next immediate action
 
-Restart Claude Code so /start, /end, /sprint, /debug, /review become active.
-Then: add more Anthropic courses to anthropic-courses/ and update SUMMARY.md and MASTER.md.
+Run the dashboard to verify it works end-to-end:
+1. Terminal 1: cd dashboard && npm run dev -w packages/backend
+2. Terminal 2: cd dashboard && npm run dev -w packages/frontend
+3. Terminal 3: cd dashboard && npm run mock -w packages/backend
+Then open http://localhost:5173 to see the live dashboard.
 
 ---
 
@@ -43,4 +49,7 @@ Then: add more Anthropic courses to anthropic-courses/ and update SUMMARY.md and
 - The /commands system requires files in .claude/commands/ AND a Claude Code restart
 - settings.local.json wires the env-protect hook — if this file is missing, the hook won't run
 - MASTER.md is written for an LLM, SUMMARY.md is written for a human — both serve different purposes
-- Industry-specific agents (mobile, web, trading, video) are planned for Phase 2
+- Industry-specific agents (mobile, web, trading, video) are planned for Phase 3
+- Dashboard packages: @dashboard/core (types), @dashboard/sdk (agent instrumentation), backend (Express+WS+SQLite), frontend (React+Vite)
+- tsconfig-paths required for @dashboard/core alias resolution in ts-node without pre-building
+- data/ and chat history/ are local-only — never commit them
