@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base dark dashboard styles */
+body {
+  @apply bg-surface text-white font-mono;
+  font-size: 13px;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-surface-secondary;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-border rounded;
+}
+
+/* React Flow dark theme override */
+.react-flow__background {
+  background-color: #0f1117 !important;
+}

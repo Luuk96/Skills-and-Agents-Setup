@@ -1,0 +1,22 @@
+{
+  "name": "agent-dashboard",
+  "version": "1.0.0",
+  "description": "Live observability dashboard for Claude Code agent ecosystems",
+  "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/sdk",
+    "packages/backend",
+    "packages/frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w packages/backend\" \"npm run dev -w packages/frontend\"",
+    "build": "npm run build -w packages/core && npm run build -w packages/sdk && npm run build -w packages/backend && npm run build -w packages/frontend",
+    "mock": "npm run mock -w packages/backend",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.4.5"
+  }
+}
