@@ -9,6 +9,7 @@ import { PageShell } from '../components/layout/PageShell';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { AgentCard } from '../components/agents/AgentCard';
 import { WorkflowGraph } from '../components/workflow/WorkflowGraph';
+import { AgentNetworkGraph } from '../components/agents/AgentNetworkGraph';
 
 // A single stat number card
 function StatCard({ label, value, sub, color = 'text-white' }: {
@@ -61,6 +62,17 @@ export function OverviewPage() {
           sub={`${stats.alertCountBySeverity.critical} critical`}
         />
         <StatCard label="Events" value={stats.totalEventsThisSession} color="text-white/60" />
+      </div>
+
+      {/* Agent network graph — full width, always visible */}
+      <div className="mb-5">
+        <div className="text-white/40 text-xs font-mono uppercase tracking-wider mb-3">
+          Agent Network
+          <span className="ml-3 text-white/20 normal-case tracking-normal">
+            {agents.length} agents · {snapshot.handoffs.length} handoffs
+          </span>
+        </div>
+        <AgentNetworkGraph snapshot={snapshot} height={340} />
       </div>
 
       <div className="grid grid-cols-2 gap-5 xl:grid-cols-3">

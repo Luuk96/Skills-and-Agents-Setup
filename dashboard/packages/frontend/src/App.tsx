@@ -13,6 +13,7 @@ import { useDashboardStore } from './store/dashboardStore';
 
 // Pages
 import { OverviewPage }     from './pages/OverviewPage';
+import { NetworkPage }      from './pages/NetworkPage';
 import { AgentsPage }       from './pages/AgentsPage';
 import { WorkflowsPage }    from './pages/WorkflowsPage';
 import { TasksPage }        from './pages/TasksPage';
@@ -47,6 +48,7 @@ function DashboardApp() {
         <main className="flex-1 overflow-hidden">
           <Routes>
             <Route path="/"          element={<OverviewPage />} />
+            <Route path="/network"   element={<NetworkPage />} />
             <Route path="/agents"    element={<AgentsPage />} />
             <Route path="/workflows" element={<WorkflowsPage />} />
             <Route path="/tasks"     element={<TasksPage />} />
