@@ -131,6 +131,24 @@ Suggestion: [What to change — described, not rewritten]
 
 ---
 
+## Dashboard integration
+This agent MUST emit telemetry events using `@dashboard/sdk`.
+See `dashboard/ECOSYSTEM.md` for the full instrumentation contract.
+
+Required events for every Reviewer run:
+```typescript
+await sdk.agentStarted({ name: 'reviewer', type: 'claude-code-agent',
+  capabilities: [{ name: 'code-review', version: '1.0' }], ... });
+await sdk.handoffReceived({ fromAgentId, handoffId }); // when called by Verifier/Orchestrator
+await sdk.taskStarted({ taskId, assignedAgentId });
+await sdk.heartbeat({ status: 'running' }); // every ~30s
+await sdk.taskCompleted({ taskId, durationMs, outputSummary: 'approved/needs fixes: summary' });
+await sdk.handoffInitiated({ toAgentName: 'debugger' OR 'orchestrator', ... });
+await sdk.agentStopped({ reason: 'completed', summary: 'review verdict: approved/needs fixes' });
+```
+
+---
+
 ## Rules
 - Always be constructive — point out what's good as well as what needs fixing
 - Explain every issue in plain language — no jargon without explanation

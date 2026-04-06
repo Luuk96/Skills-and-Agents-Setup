@@ -120,6 +120,22 @@ For each major decision:
 
 ---
 
+## Dashboard integration
+This agent MUST emit telemetry events using `@dashboard/sdk`.
+See `dashboard/ECOSYSTEM.md` for the full instrumentation contract.
+
+Required events for every Architect run:
+```typescript
+await sdk.agentStarted({ name: 'architect', type: 'claude-code-agent',
+  capabilities: [{ name: 'architecture-design', version: '1.0' }], ... });
+await sdk.handoffReceived({ fromAgentId, handoffId }); // when called by Orchestrator/Planner
+await sdk.heartbeat({ status: 'running' }); // every ~30s
+await sdk.handoffInitiated({ toAgentName: 'builder', goal, currentState, task, ... });
+await sdk.agentStopped({ reason: 'completed', summary: 'architecture plan produced' });
+```
+
+---
+
 ## Rules
 - Always explain decisions in plain language — no jargon without explanation
 - Never over-engineer — choose the simplest solution that works

@@ -1,0 +1,449 @@
+# ============================================================
+# AGENT REGISTRY
+# Machine-readable source of truth for all available agents.
+# The Orchestrator reads this to make routing decisions.
+# Add new agents here when they are created.
+# ============================================================
+
+schema_version: "1.0"
+
+agents:
+
+  - id: orchestrator
+    name: Orchestrator
+    file: agents/orchestrator.md
+    description: >
+      Master coordinator. Reads project context, decides which agents are needed
+      and in what order, tracks overall progress, and reports final summary to Luuk.
+    purpose: coordinate
+    when_to_use:
+      - At the start of any complex, multi-step task
+      - When multiple agents need to work together
+      - When Luuk says "work it out" or "handle this autonomously"
+    when_not_to_use:
+      - For simple single-file changes (call the appropriate agent directly)
+      - When the task is clearly scoped to one agent's responsibility
+    capabilities:
+      - coordination
+      - routing
+      - summarization
+    inputs:
+      - Goal description from Luuk
+      - CLAUDE.md
+      - PROGRESS.md
+      - COORDINATION.md
+    outputs:
+      - Orchestrator Summary with agents used, steps taken, status, next action
+    allowed_tools:
+      - Read
+      - Bash (read-only git commands only)
+    disallowed_tools:
+      - Write
+      - Edit
+      - any tool that modifies files
+    handoff_targets:
+      - planner
+      - architect
+      - analyst
+      - builder
+      - verifier
+      - reviewer
+      - debugger
+    telemetry:
+      must_emit:
+        - session.started (once per session)
+        - agent.started
+        - agent.heartbeat (every ~30s)
+        - workflow.started
+        - workflow.stage.started
+        - workflow.stage.completed
+        - workflow.completed
+        - handoff.initiated
+        - agent.stopped
+      on_failure:
+        - agent.error
+        - workflow.failed
+    max_turns: 10
+    failure_modes:
+      - Calling the same agent twice for the same purpose (loop)
+      - Exceeding 10 steps without reporting to Luuk
+      - Routing to an agent that does not exist in this registry
+
+  - id: planner
+    name: Planner
+    file: agents/planner.md
+    description: >
+      Turns ideas, goals, and feature requests into a structured sprint plan with
+      tasks, dependencies, assigned agents, and a checkable definition of done.
+    purpose: plan
+    when_to_use:
+      - At the start of a new sprint or feature
+      - When a goal needs to be broken into tasks
+      - Called by Orchestrator at the start of new work
+    when_not_to_use:
+      - When a sprint plan already exists in CLAUDE.md
+      - For single-task or trivial changes
+    capabilities:
+      - sprint-planning
+      - task-decomposition
+      - dependency-mapping
+    inputs:
+      - Goal (what should exist when done)
+      - Current state (what already exists)
+      - Constraints (tech stack, must-not-break, deadline)
+      - Rough scope (small feature vs large project)
+    outputs:
+      - Sprint plan with tasks, why each exists, outputs, assigned agents, dependencies
+      - Definition of done (specific, checkable criteria)
+    allowed_tools:
+      - Read
+      - Bash (git log read-only)
+    disallowed_tools:
+      - Write
+      - Edit
+      - any tool that modifies files
+    handoff_targets:
+      - architect
+      - orchestrator
+    telemetry:
+      must_emit:
+        - agent.started
+        - agent.heartbeat
+        - task.created (one per planned task)
+        - handoff.initiated
+        - agent.stopped
+    max_turns: 8
+    failure_modes:
+      - Planning more than 8 tasks without flagging to Luuk
+      - Producing a plan without a checkable definition of done
+
+  - id: architect
+    name: Architect
+    file: agents/architect.md
+    description: >
+      Designs technical structure before coding begins. Specifies file layout,
+      data flow, design decisions, schemas, and dependencies. Does not write code.
+    purpose: design
+    when_to_use:
+      - After Planner produces a sprint plan
+      - When adding a major feature that requires new files or structural changes
+      - Skip for small tasks (single file change, single function fix)
+    when_not_to_use:
+      - For bug fixes (go directly to Debugger)
+      - For small tasks where the structure is already clear
+    capabilities:
+      - architecture-design
+      - file-structure-planning
+      - dependency-analysis
+    inputs:
+      - Sprint plan from Planner
+      - Existing project structure
+      - Tech stack from CLAUDE.md
+      - ECOSYSTEM.md (for existing schemas and field names)
+    outputs:
+      - Architecture plan with file tree, design decisions, data flow, schemas, risks
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+    disallowed_tools:
+      - Write
+      - Edit
+      - Bash (beyond read-only inspection)
+    handoff_targets:
+      - builder
+      - orchestrator
+    telemetry:
+      must_emit:
+        - agent.started
+        - agent.heartbeat
+        - handoff.initiated
+        - agent.stopped
+    max_turns: 6
+    failure_modes:
+      - Designing something that already exists in the codebase
+      - Introducing new libraries without flagging to Luuk
+
+  - id: analyst
+    name: Analyst
+    file: agents/analyst.md
+    description: >
+      Reads and understands existing code. Explains what code does, finds problems,
+      identifies patterns, and summarizes project state. Never modifies anything.
+    purpose: analyse
+    when_to_use:
+      - When something is broken and we need to understand why before fixing
+      - At the start of a new session to understand project state
+      - Before Debugger starts working, to give it context
+      - When Orchestrator needs a project status report
+    when_not_to_use:
+      - When the bug location is already known (go directly to Debugger)
+      - When the task is implementation (go directly to Builder)
+    capabilities:
+      - code-analysis
+      - problem-identification
+      - project-summarization
+    inputs:
+      - Files or folders to analyze
+      - The specific question to answer
+      - Optional: error message or bug description to focus on
+    outputs:
+      - Analysis report with findings, problems (file + line), confidence level, recommended next agent
+    allowed_tools:
+      - Read
+      - Grep
+      - Glob
+      - Bash (git log, git diff — read-only)
+    disallowed_tools:
+      - Write
+      - Edit
+    handoff_targets:
+      - debugger
+      - orchestrator
+    telemetry:
+      must_emit:
+        - agent.started
+        - agent.heartbeat
+        - handoff.initiated
+        - agent.stopped
+    max_turns: 8
+    failure_modes:
+      - Making claims without citing file and line numbers
+      - Modifying any files
+
+  - id: builder
+    name: Builder
+    file: agents/builder.md
+    description: >
+      Writes production code following the architecture plan. Creates or modifies
+      files, adds comments, runs typecheck, and produces a build report. Does not
+      design, review, or commit.
+    purpose: implement
+    when_to_use:
+      - After Architect has produced an architecture plan
+      - When a task in the sprint plan is ready to be implemented
+      - One task per Builder call
+    when_not_to_use:
+      - Without an architecture plan for complex features
+      - For bug fixes (use Debugger)
+      - For code quality improvements (use Reviewer)
+    capabilities:
+      - code-generation
+      - file-creation
+      - typecheck
+    inputs:
+      - Specific task to implement (from sprint plan)
+      - Architecture plan from Architect
+      - Tech stack from CLAUDE.md
+      - ECOSYSTEM.md (for field names and schemas)
+    outputs:
+      - Created or modified files
+      - Build report (what was built, typecheck result, assumptions)
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash (typecheck, lint, build — no git add/commit)
+    disallowed_tools:
+      - Bash (git add, git commit, git push)
+    handoff_targets:
+      - verifier
+      - debugger (if typecheck fails)
+      - orchestrator
+    telemetry:
+      must_emit:
+        - agent.started
+        - agent.heartbeat
+        - handoff.received
+        - task.started
+        - task.completed (or task.blocked)
+        - handoff.initiated
+        - agent.stopped
+    max_turns: 15
+    failure_modes:
+      - Creating a file that already exists without checking first
+      - Writing code without reading the architecture plan
+      - Committing files (not the Builder's responsibility)
+      - Implementing multiple tasks in one call
+
+  - id: verifier
+    name: Verifier
+    file: agents/verifier.md
+    description: >
+      Validates that built code actually works. Runs typecheck, lint, and tests.
+      Traces the logic and checks the definition of done. Does not judge quality
+      (Reviewer's job) and does not fix bugs (Debugger's job).
+    purpose: verify
+    when_to_use:
+      - Immediately after Builder finishes a task
+      - After Debugger applies a fix (re-verify to confirm fix worked)
+      - Before Reviewer runs quality check
+    when_not_to_use:
+      - As a replacement for the Reviewer (quality is separate from correctness)
+      - Without a definition of done to check against
+    capabilities:
+      - typecheck
+      - lint
+      - test-execution
+      - logic-tracing
+      - wiring-verification
+    inputs:
+      - Build report from Builder (files created/modified)
+      - Task definition from sprint plan (definition of done)
+      - Tech stack (which commands to run)
+    outputs:
+      - Verification report with PASS/FAIL verdict and evidence for each criterion
+    allowed_tools:
+      - Bash (typecheck, lint, test — read-only)
+      - Read
+      - Grep
+    disallowed_tools:
+      - Write
+      - Edit
+    handoff_targets:
+      - reviewer (if PASS)
+      - debugger (if FAIL — errors or test failures)
+      - builder (if FAIL — missing pieces)
+    telemetry:
+      must_emit:
+        - agent.started
+        - agent.heartbeat
+        - handoff.received
+        - task.started
+        - task.completed (or task.blocked)
+        - handoff.initiated
+        - agent.stopped
+    max_turns: 6
+    failure_modes:
+      - Passing code that has typecheck errors
+      - Skipping automated checks without documenting why
+
+  - id: reviewer
+    name: Reviewer
+    file: agents/reviewer.md
+    description: >
+      Reads freshly verified code and gives structured feedback on quality, clarity,
+      correctness, safety, and match to plan. Does not fix — points out what needs
+      improving and why.
+    purpose: review
+    when_to_use:
+      - After Verifier gives a PASS verdict
+      - When Luuk asks "is this code good?"
+      - At the end of a sprint as the final check before commit
+    when_not_to_use:
+      - Before Verifier has run (do not review broken code)
+      - As a substitute for testing
+    capabilities:
+      - code-quality-review
+      - security-check
+      - completeness-check
+      - duplicate-detection
+    inputs:
+      - Files written or changed
+      - Original plan or task description
+      - Tech stack
+    outputs:
+      - Code review report with verdict, severity-classified issues, checklist
+    allowed_tools:
+      - Read
+      - Bash (git diff)
+      - Grep
+    disallowed_tools:
+      - Write
+      - Edit
+    handoff_targets:
+      - debugger (if critical/major issues found)
+      - orchestrator (if approved)
+    telemetry:
+      must_emit:
+        - agent.started
+        - agent.heartbeat
+        - handoff.received
+        - task.started
+        - task.completed
+        - handoff.initiated
+        - agent.stopped
+    max_turns: 6
+    failure_modes:
+      - Approving code with critical security issues
+      - Reviewing without checking for duplicate code first
+
+  - id: debugger
+    name: Debugger
+    file: agents/debugger.md
+    description: >
+      Finds and fixes broken things. Takes an error message, locates the root cause,
+      explains what went wrong, and applies the minimal fix. Always fixes root cause,
+      never the symptom.
+    purpose: debug
+    when_to_use:
+      - When something is broken and Luuk gets an error message
+      - After Verifier gives a FAIL verdict (errors or test failures)
+      - After Reviewer flags critical issues
+      - Always receives Analyst report first when called through Orchestrator
+    when_not_to_use:
+      - Without an error message or specific failure (use Analyst first)
+      - For code quality improvements (use Reviewer)
+    capabilities:
+      - root-cause-analysis
+      - minimal-fix
+      - regression-checking
+    inputs:
+      - Error message (exact text)
+      - Analyst report (preferred)
+      - Files where error occurs
+      - What was happening when error occurred
+    outputs:
+      - Debug report with root cause (file + line), explanation, fix applied, verification steps
+    allowed_tools:
+      - Read
+      - Grep
+      - Edit
+      - Bash (git log, git diff — read-only)
+    disallowed_tools:
+      - Write (no new files)
+      - Bash (git add, git commit)
+    handoff_targets:
+      - verifier (after fix — re-verify)
+      - reviewer (if fix is approved and quality review needed)
+      - orchestrator
+    telemetry:
+      must_emit:
+        - agent.started
+        - agent.heartbeat
+        - handoff.received
+        - task.started
+        - task.completed (or task.blocked)
+        - handoff.initiated
+        - agent.stopped
+    max_turns: 10
+    failure_modes:
+      - Fixing the same bug more than 3 times without asking Luuk
+      - Deleting working code to make an error disappear
+      - Creating new files to work around a bug
+
+# ============================================================
+# ROUTING REFERENCE (for Orchestrator)
+#
+# Standard flow for a new feature:
+#   Orchestrator → Planner → Architect → Builder → Verifier → Reviewer → commit
+#
+# Standard flow for a bug fix:
+#   Orchestrator → Analyst → Debugger → Verifier → commit
+#
+# Re-verification after fix:
+#   Debugger → Verifier → (if pass) Reviewer → commit
+#               └──────→ (if fail) back to Debugger
+#
+# Quick review of existing code:
+#   Analyst → Reviewer
+#
+# Rules for routing:
+#   - Never call Builder without an architecture plan for complex features
+#   - Never call Reviewer before Verifier has passed
+#   - Never call Debugger without an error message or Analyst report
+#   - Never call the same agent twice in a row for the same purpose
+#   - If unsure which agent to call: ask Luuk
+# ============================================================

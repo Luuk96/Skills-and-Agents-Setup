@@ -95,6 +95,24 @@ Each task follows this format:
 
 ---
 
+## Dashboard integration
+This agent MUST emit telemetry events using `@dashboard/sdk`.
+See `dashboard/ECOSYSTEM.md` for the full instrumentation contract.
+
+Required events for every Planner run:
+```typescript
+await sdk.agentStarted({ name: 'planner', type: 'claude-code-agent',
+  capabilities: [{ name: 'sprint-planning', version: '1.0' }], ... });
+await sdk.handoffReceived({ fromAgentId, handoffId }); // when called by Orchestrator
+// Emit one task.created per planned task:
+await sdk.taskCreated({ taskId, title, description, priority, assignedAgentId, ... });
+await sdk.heartbeat({ status: 'running' }); // every ~30s
+await sdk.handoffInitiated({ toAgentName: 'architect', goal, currentState, task, ... });
+await sdk.agentStopped({ reason: 'completed', summary: 'sprint plan produced, X tasks defined' });
+```
+
+---
+
 ## Rules
 - Never plan more than one sprint at a time — keep focus
 - Tasks must be small enough to complete in one work session

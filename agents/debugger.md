@@ -125,6 +125,26 @@ Line: [line number if applicable]
 
 ---
 
+## Dashboard integration
+This agent MUST emit telemetry events using `@dashboard/sdk`.
+See `dashboard/ECOSYSTEM.md` for the full instrumentation contract.
+
+Required events for every Debugger run:
+```typescript
+await sdk.agentStarted({ name: 'debugger', type: 'claude-code-agent',
+  capabilities: [{ name: 'root-cause-analysis', version: '1.0' }], ... });
+await sdk.handoffReceived({ fromAgentId, handoffId }); // when called by Analyst/Verifier
+await sdk.taskStarted({ taskId, assignedAgentId });
+await sdk.heartbeat({ status: 'running' }); // every ~30s
+// If stuck:
+await sdk.taskBlocked({ taskId, reason: 'root cause unclear, need more info from Luuk' });
+await sdk.taskCompleted({ taskId, durationMs, outputSummary: 'fixed: description of fix' });
+await sdk.handoffInitiated({ toAgentName: 'verifier', goal, currentState, task, ... });
+await sdk.agentStopped({ reason: 'completed', summary: 'fix applied to filename:line' });
+```
+
+---
+
 ## Rules
 - Always fix the root cause, not the symptom
 - Apply the smallest possible change — never refactor surrounding code

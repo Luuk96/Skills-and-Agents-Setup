@@ -15,11 +15,13 @@ const WF_ID = `wf_sprint_mock_${Date.now()}`;
 const ORCHESTRATOR_ID = 'agt_orchestrator';
 const ANALYST_ID = 'agt_analyst';
 const BUILDER_ID = 'agt_builder';
+const VERIFIER_ID = 'agt_verifier';
 
 // Task IDs
 const TASK_EXPLORE = `tsk_explore_${Date.now()}`;
 const TASK_PLAN = `tsk_plan_${Date.now()}`;
 const TASK_BUILD = `tsk_build_${Date.now()}`;
+const TASK_VERIFY = `tsk_verify_${Date.now()}`;
 
 let eventSeq = 1;
 
@@ -299,15 +301,103 @@ async function runMockSession() {
   }, { workflowId: WF_ID }));
   await sleep(400);
 
-  // ── 18. Workflow completes ────────────────────────────────
-  await emit(makeEvent('workflow.completed', ORCHESTRATOR_ID, {
-    totalDurationMs: 480_000,
-    stageCount: 5,
-    summary: 'Sprint complete. Auth feature implemented and tested.',
+  // ── 18. Builder hands off to Verifier ─────────────────────
+  const verifyHandoffId = `ho_verify_${Date.now()}`;
+  await emit(makeEvent('handoff.initiated', BUILDER_ID, {
+    fromAgentId: BUILDER_ID,
+    toAgentId: VERIFIER_ID,
+    toAgentName: 'verifier',
+    goal: 'Verify auth module works correctly',
+    currentState: 'Build complete. LoginScreen.tsx + auth.service.ts created. Typecheck passed.',
+    task: 'Run typecheck, lint, trace login flow, confirm definition of done is met',
+    filesToRead: ['src/screens/LoginScreen.tsx', 'src/services/auth.service.ts', 'src/App.tsx'],
+    expectedOutput: 'Verification report — PASS or FAIL with evidence',
+    constraints: 'Do not modify any files — verification only',
+  }, { workflowId: WF_ID }));
+  await sleep(400);
+
+  // ── 19. Verifier agent starts ─────────────────────────────
+  await emit(makeEvent('agent.started', VERIFIER_ID, {
+    name: 'verifier',
+    type: 'claude-code-agent',
+    capabilities: [
+      { name: 'typecheck', version: '1.0' },
+      { name: 'verification', version: '1.0' },
+      { name: 'logic-tracing', version: '1.0' },
+    ],
+    parentAgentId: ORCHESTRATOR_ID,
+    metadata: { model: 'claude-sonnet-4-6' },
+  }));
+  await sleep(300);
+
+  await emit(makeEvent('handoff.received', VERIFIER_ID, {
+    fromAgentId: BUILDER_ID,
+    handoffId: verifyHandoffId,
   }, { workflowId: WF_ID }));
   await sleep(300);
 
-  // ── 19. Agents stop ───────────────────────────────────────
+  // ── 20. Stage 5: Verify begins ────────────────────────────
+  await emit(makeEvent('workflow.stage.started', ORCHESTRATOR_ID, {
+    stageId: 'stg_verify',
+    stageName: 'Phase 5 — Verify',
+    assignedAgentId: VERIFIER_ID,
+  }, { workflowId: WF_ID }));
+
+  await emit(makeEvent('task.created', ORCHESTRATOR_ID, {
+    title: 'Verify authentication module',
+    description: 'Run typecheck, lint, trace login flow, check definition of done',
+    priority: 'high',
+    assignedAgentId: VERIFIER_ID,
+    estimatedDurationMs: 60_000,
+    dependencies: [{ taskId: TASK_BUILD, type: 'blocks' }],
+    tags: ['verify', 'auth'],
+  }, { workflowId: WF_ID, taskId: TASK_VERIFY }));
+
+  await emit(makeEvent('task.started', VERIFIER_ID, {
+    assignedAgentId: VERIFIER_ID,
+  }, { workflowId: WF_ID, taskId: TASK_VERIFY }));
+  await sleep(600);
+
+  // Verifier heartbeat — show it running checks
+  await emit(makeEvent('agent.heartbeat', VERIFIER_ID, {
+    status: 'running',
+    currentTaskId: TASK_VERIFY,
+    currentStageId: 'stg_verify',
+    memoryUsageMb: 95,
+  }, { workflowId: WF_ID }));
+  await sleep(1000);
+
+  // Verification passes
+  await emit(makeEvent('task.completed', VERIFIER_ID, {
+    durationMs: 52_000,
+    outputSummary: 'PASS — typecheck clean, login flow traces correctly, all definition-of-done criteria met',
+  }, { workflowId: WF_ID, taskId: TASK_VERIFY }));
+  await sleep(300);
+
+  // ── 21. Verify stage completes ────────────────────────────
+  await emit(makeEvent('workflow.stage.completed', VERIFIER_ID, {
+    stageId: 'stg_verify',
+    stageName: 'Phase 5 — Verify',
+    durationMs: 52_000,
+    outputSummary: 'PASS — all checks passed, ready for review',
+    nextStageId: null,
+    handoffData: { verdict: 'PASS', typecheckPassed: true, testsPassed: true },
+  }, { workflowId: WF_ID }));
+  await sleep(400);
+
+  // ── 22. Workflow completes ────────────────────────────────
+  await emit(makeEvent('workflow.completed', ORCHESTRATOR_ID, {
+    totalDurationMs: 540_000,
+    stageCount: 5,
+    summary: 'Sprint complete. Auth feature built, verified, and ready for commit.',
+  }, { workflowId: WF_ID }));
+  await sleep(300);
+
+  // ── 23. Agents stop ───────────────────────────────────────
+  await emit(makeEvent('agent.stopped', VERIFIER_ID, {
+    reason: 'completed',
+    summary: 'Verification passed — auth module confirmed working',
+  }));
   await emit(makeEvent('agent.stopped', BUILDER_ID, {
     reason: 'completed',
     summary: 'Built auth module as requested',
@@ -318,7 +408,7 @@ async function runMockSession() {
   }));
   await emit(makeEvent('agent.stopped', ORCHESTRATOR_ID, {
     reason: 'completed',
-    summary: 'Sprint workflow complete',
+    summary: 'Sprint workflow complete — 4 agents, 5 stages, verified and ready',
   }));
   await sleep(300);
 
@@ -329,9 +419,11 @@ async function runMockSession() {
     totalDurationMs: 600_000,
   }));
 
-  console.log('\n✅ Mock session complete!');
-  console.log(`📊 Open the dashboard to see the results.`);
-  console.log(`🔍 State snapshot: ${BACKEND_URL}/api/state`);
+  console.log('\nMock session complete!');
+  console.log(`Agents: orchestrator, analyst, builder, verifier`);
+  console.log(`Stages: explore -> plan -> design -> build -> verify`);
+  console.log(`Open the dashboard to see the results: http://localhost:5173`);
+  console.log(`State snapshot: ${BACKEND_URL}/api/state`);
 }
 
 runMockSession().catch(err => {

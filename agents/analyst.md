@@ -115,6 +115,22 @@ For each problem:
 
 ---
 
+## Dashboard integration
+This agent MUST emit telemetry events using `@dashboard/sdk`.
+See `dashboard/ECOSYSTEM.md` for the full instrumentation contract.
+
+Required events for every Analyst run:
+```typescript
+await sdk.agentStarted({ name: 'analyst', type: 'claude-code-agent',
+  capabilities: [{ name: 'code-analysis', version: '1.0' }], ... });
+await sdk.handoffReceived({ fromAgentId, handoffId }); // when called by Orchestrator/Debugger
+await sdk.heartbeat({ status: 'running' }); // every ~30s
+await sdk.handoffInitiated({ toAgentName: 'debugger', goal, currentState, task, ... });
+await sdk.agentStopped({ reason: 'completed', summary: 'analysis complete, X findings' });
+```
+
+---
+
 ## Rules
 - Never write or modify code — only read and report
 - Always cite specific files and line numbers when pointing to a problem
