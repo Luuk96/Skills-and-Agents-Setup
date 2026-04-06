@@ -68,8 +68,8 @@ function AgentNode({ data }: { data: AgentNodeData }) {
         border: `1.5px solid ${colors.border}`,
         borderRadius: 10,
         padding: '8px 12px',
-        minWidth: 140,
-        maxWidth: 170,
+        minWidth: 160,
+        maxWidth: 190,
         cursor: 'pointer',
         fontFamily: 'monospace',
         userSelect: 'none',
@@ -220,38 +220,57 @@ function AgentDetailDrawer({ agent, onClose }: { agent: Agent; onClose: () => vo
 }
 
 // ---- Layout helper ----
-// Positions agents in a grid with parents slightly above children.
+// Positions agents so they never overlap and always fit in view.
+// Roots sit in a row at y=0, centred over their children.
+// Children are spread evenly below their parent.
 function layoutAgents(agents: Agent[]): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
-  const NODE_W = 180;
-  const NODE_H = 100;
-  const COL_GAP = 60;
-  const ROW_GAP = 80;
+  const NODE_W = 190;
+  const NODE_H = 110;
+  const COL_GAP = 80;   // horizontal gap between sibling nodes
+  const ROW_GAP = 100;  // vertical gap between parent and children rows
 
-  // Separate root agents (no parent) from children
-  const roots = agents.filter(a => !a.parentAgentId);
-  const children = agents.filter(a => a.parentAgentId);
+  const roots    = agents.filter(a => !a.parentAgentId);
+  const children = agents.filter(a =>  a.parentAgentId);
 
-  // Place roots in a row at y=0
-  roots.forEach((agent, i) => {
-    positions.set(agent.id, {
-      x: i * (NODE_W + COL_GAP),
-      y: 0,
-    });
-  });
-
-  // Place children below their parent, offset by index
-  const childCountPerParent = new Map<string, number>();
+  // Group children by parent
+  const childrenByParent = new Map<string, Agent[]>();
   children.forEach(agent => {
-    const parentId = agent.parentAgentId!;
-    const idx = childCountPerParent.get(parentId) ?? 0;
-    const parentPos = positions.get(parentId) ?? { x: 0, y: 0 };
-    positions.set(agent.id, {
-      x: parentPos.x + idx * (NODE_W + COL_GAP / 2),
-      y: parentPos.y + NODE_H + ROW_GAP,
-    });
-    childCountPerParent.set(parentId, idx + 1);
+    const pid = agent.parentAgentId!;
+    const group = childrenByParent.get(pid) ?? [];
+    group.push(agent);
+    childrenByParent.set(pid, group);
   });
+
+  // Calculate total width needed for children of a parent
+  // so we can centre the parent over them
+  function childrenWidth(parentId: string): number {
+    const kids = childrenByParent.get(parentId) ?? [];
+    if (kids.length === 0) return NODE_W;
+    return kids.length * NODE_W + (kids.length - 1) * COL_GAP;
+  }
+
+  // Total width of all roots (each root spans its children)
+  let cursor = 0;
+  roots.forEach(root => {
+    const spanW = childrenWidth(root.id);
+    const rootX = cursor + (spanW - NODE_W) / 2;
+    positions.set(root.id, { x: rootX, y: 0 });
+
+    // Place children in a row below, centred under parent
+    const kids = childrenByParent.get(root.id) ?? [];
+    kids.forEach((child, i) => {
+      positions.set(child.id, {
+        x: cursor + i * (NODE_W + COL_GAP),
+        y: NODE_H + ROW_GAP,
+      });
+    });
+
+    cursor += spanW + COL_GAP;
+  });
+
+  // Handle orphan roots that have no children — just place them in sequence
+  // (already handled above since childrenWidth returns NODE_W when no kids)
 
   return positions;
 }
@@ -302,9 +321,10 @@ export function AgentNetworkGraph({ snapshot, height = 420 }: AgentNetworkGraphP
         id: `handoff_${handoff.id}`,
         source: fromId,
         target: toId,
-        label: handoff.status === 'in-transit' ? '⟶ handoff' : undefined,
+        label: handoff.status === 'in-transit' ? 'handoff' : undefined,
         labelStyle: { fontSize: 9, fontFamily: 'monospace', fill: '#eab30890' },
-        labelBgStyle: { fill: '#0f1117', fillOpacity: 0.8 },
+        labelBgStyle: { fill: '#0f1117', fillOpacity: 0.9 },
+        labelBgPadding: [4, 6] as [number, number],
         animated: isActive,
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -370,7 +390,7 @@ export function AgentNetworkGraph({ snapshot, height = 420 }: AgentNetworkGraphP
         onEdgesChange={onEdgesChange}
         nodeTypes={NODE_TYPES}
         fitView
-        fitViewOptions={{ padding: 0.25 }}
+        fitViewOptions={{ padding: 0.35 }}
         nodesDraggable
         nodesConnectable={false}
         proOptions={{ hideAttribution: true }}
@@ -382,6 +402,7 @@ export function AgentNetworkGraph({ snapshot, height = 420 }: AgentNetworkGraphP
           showInteractive={false}
         />
         <MiniMap
+          position="bottom-left"
           style={{ background: '#161b27', border: '1px solid #2a3347' }}
           nodeColor={(node) => {
             const agent = (node.data as any)?.agent as Agent | undefined;
@@ -393,7 +414,7 @@ export function AgentNetworkGraph({ snapshot, height = 420 }: AgentNetworkGraphP
 
       {/* Legend */}
       <div style={{
-        position: 'absolute', top: 10, left: 10, zIndex: 5,
+        position: 'absolute', top: 10, right: 10, zIndex: 5,
         background: '#161b27cc', border: '1px solid #2a3347',
         borderRadius: 6, padding: '6px 10px',
         fontFamily: 'monospace', fontSize: 9,
