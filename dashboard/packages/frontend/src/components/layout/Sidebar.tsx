@@ -7,13 +7,14 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Bot, GitBranch, CheckSquare,
-  Zap, Activity, AlertTriangle, FolderOpen, History, Network,
+  Zap, Activity, AlertTriangle, FolderOpen, History, Network, Workflow,
 } from 'lucide-react';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 const NAV_ITEMS = [
   { to: '/',          icon: LayoutDashboard, label: 'Overview'    },
   { to: '/network',   icon: Network,         label: 'Network'     },
+  { to: '/flow',      icon: Workflow,        label: 'Agent Flow'  },
   { to: '/agents',    icon: Bot,             label: 'Agents'      },
   { to: '/workflows', icon: GitBranch,       label: 'Workflows'   },
   { to: '/tasks',     icon: CheckSquare,     label: 'Tasks'       },

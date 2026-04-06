@@ -15,6 +15,7 @@ import { useDashboardStore } from './store/dashboardStore';
 import { OverviewPage }     from './pages/OverviewPage';
 import { NetworkPage }      from './pages/NetworkPage';
 import { AgentsPage }       from './pages/AgentsPage';
+import { FlowPage }         from './pages/FlowPage';
 import { WorkflowsPage }    from './pages/WorkflowsPage';
 import { TasksPage }        from './pages/TasksPage';
 import { SkillsPage }       from './pages/SkillsPage';
@@ -50,6 +51,7 @@ function DashboardApp() {
             <Route path="/"          element={<OverviewPage />} />
             <Route path="/network"   element={<NetworkPage />} />
             <Route path="/agents"    element={<AgentsPage />} />
+            <Route path="/flow"      element={<FlowPage />} />
             <Route path="/workflows" element={<WorkflowsPage />} />
             <Route path="/tasks"     element={<TasksPage />} />
             <Route path="/skills"    element={<SkillsPage />} />
